@@ -44,6 +44,24 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
   }
 
   void _triggerGoogleSync() async {
+    final driveService = GoogleDriveService.instance;
+
+    // Automatically prompt Google Drive Sign-In if unauthenticated
+    if (!driveService.isAuthenticated) {
+      setState(() => _isSyncing = true);
+      final signedIn = await driveService.signInWithGoogle();
+      if (!signedIn) {
+        if (mounted) {
+          setState(() {
+            _isSyncing = false;
+            _errorMessage = 'Google Drive Sign-In was cancelled or failed. Please sign in to your Google Account to upload documents to Google Drive.';
+            _showErrorPromptDialog(_errorMessage!);
+          });
+        }
+        return;
+      }
+    }
+
     setState(() {
       _isSyncing = true;
       _errorMessage = null;

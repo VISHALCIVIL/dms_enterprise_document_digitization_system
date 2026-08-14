@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ScanDigitize - Live Scanning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#a8b8ff",
+                      "on-tertiary-container": "#ffa583",
+                      "surface-variant": "#e0e3e5",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-surface-variant": "#444653",
+                      "secondary": "#505f76",
+                      "inverse-surface": "#2d3133",
+                      "secondary-container": "#d0e1fb",
+                      "on-secondary": "#ffffff",
+                      "inverse-primary": "#b8c4ff",
+                      "primary-fixed-dim": "#b8c4ff",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "surface-container-high": "#e6e8ea",
+                      "on-tertiary-fixed": "#380d00",
+                      "surface-container-low": "#f2f4f6",
+                      "outline": "#757684",
+                      "on-background": "#191c1e",
+                      "surface-container": "#eceef0",
+                      "tertiary": "#611e00",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-tertiary": "#ffffff",
+                      "on-surface": "#191c1e",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#802a00",
+                      "background": "#f7f9fb",
+                      "on-secondary-container": "#54647a",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-dim": "#d8dadc",
+                      "on-primary-fixed": "#001453",
+                      "surface-bright": "#f7f9fb",
+                      "tertiary-fixed": "#ffdbce",
+                      "tertiary-container": "#872d00",
+                      "on-primary-fixed-variant": "#173bab",
+                      "outline-variant": "#c4c5d5",
+                      "on-secondary-fixed": "#0b1c30",
+                      "surface": "#f7f9fb",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#dde1ff",
+                      "secondary-fixed": "#d3e4fe",
+                      "surface-tint": "#3755c3",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "primary": "#00288e",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "primary-container": "#1e40af"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "density-high": "8px",
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "density-medium": "16px",
+                      "density-low": "24px",
+                      "container-padding-mobile": "16px",
+                      "container-padding-desktop": "32px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "label-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .progress-bar-animated {
+            background-size: 200% 100%;
+            animation: progress-shimmer 2s infinite linear;
+        }
+        @keyframes progress-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex font-body-md">
+<!-- SideNavBar (Shared Component) -->
+<nav class="hidden md:flex flex-col h-full py-density-low bg-surface border-r border-outline-variant docked left-0 h-full w-64 fixed z-40 transition-colors duration-200">
+<div class="px-gutter mb-density-low">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ScanDigitize</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Enterprise Node 04</p>
+</div>
+<ul class="flex flex-col gap-unit w-full">
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="folder_shared">folder_shared</span>
+<span class="font-label-md text-label-md">Projects</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-primary font-bold border-r-4 border-primary hover:bg-surface-container-high transition-colors duration-200 bg-surface-container-low" href="#">
+<span class="material-symbols-outlined" data-icon="screenshot_region">screenshot_region</span>
+<span class="font-label-md text-label-md">Live Scanning</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="cloud_upload">cloud_upload</span>
+<span class="font-label-md text-label-md">Upload Queue</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Archive</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-md text-label-md">Statistics</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-gutter px-gutter py-density-high text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto px-gutter flex items-center gap-gutter pt-density-low border-t border-outline-variant mx-gutter">
+<img alt="Operator Profile" class="w-10 h-10 rounded-full object-cover bg-surface-variant" data-alt="A professional headshot of a corporate IT technician in a well-lit, modern office environment. The style is clean, sharp, and highly detailed, suitable for an enterprise software avatar. Neutral background, soft daylight illumination, emphasizing a trustworthy and efficient persona." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1N0nYKMSXTlBfuBHVioJ4b5BZ8pgE9d0S1tYvQyYEdgdlBLm3JhPN5EUtbiGv1_ldsQmBgAByhnrAHp1-Fq5VhRddMec0cwSfwGdaK91P6-kyTwXg072sgovq_Q3UPpAh12SXMCBaU7s-_ku1lRqIzvKbim2I9xu7DfjQDXZ9dYAoRBjus7bl07Ee4dc8ArA4awveNaKnTO0cdBH7KzXfDK1DnEC2dELNzaBEZVMmvrsqwOwxLFAZTw"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Operator</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Active</span>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="hidden md:flex justify-between items-center w-full px-container-padding-desktop bg-surface border-b border-outline-variant h-16 shrink-0 sticky top-0 z-30">
+<div class="font-headline-md text-headline-md font-extrabold text-primary">ScanDigitize Admin</div>
+<div class="flex items-center gap-gutter">
+<div class="relative flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-fixed transition-all w-64">
+<input class="bg-transparent border-none outline-none text-body-md text-on-surface w-full placeholder:text-on-surface-variant" placeholder="Search..." type="text"/>
+<span class="material-symbols-outlined text-on-surface-variant ml-2" data-icon="search">search</span>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Live Scanning Content Area -->
+<div class="flex-1 p-container-padding-mobile md:p-container-padding-desktop flex flex-col lg:flex-row gap-container-padding-desktop overflow-hidden">
+<!-- Left Panel: Main Preview Area -->
+<div class="flex-1 bg-surface border border-outline-variant rounded-lg flex flex-col overflow-hidden">
+<div class="px-gutter py-density-high border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-unit">
+<span class="material-symbols-outlined text-primary" data-icon="document_scanner">document_scanner</span>
+                        Live Preview
+                    </h2>
+<div class="flex items-center gap-unit">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="zoom_out">zoom_out</span>
+</button>
+<span class="font-label-md text-label-md text-on-surface-variant">100%</span>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="zoom_in">zoom_in</span>
+</button>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-low p-gutter overflow-auto flex justify-center items-center relative">
+<!-- Placeholder for Scanned Page -->
+<div class="w-full max-w-2xl bg-white shadow-md border border-outline-variant aspect-[1/1.414] relative transition-transform duration-300 transform" id="scan-preview-page">
+<img alt="Live Document Preview" class="w-full h-full object-contain p-4" data-alt="A highly detailed, crisp image of a complex enterprise financial document being scanned. The document contains dense tables, barcodes, and official stamps. The style is hyper-realistic, brightly lit with neutral white light, focusing on the high resolution and clarity typical of professional digitization hardware. The background is isolated white." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0ridzF9GJ7RWc4UcW7h8GG-O0lm8VMjJEsq6c9OmCdNAQ0wu-JIGApxxqnBwhib_Rul5EwNVLL9J7bq-Y2GViU2OUcGzxgfJEVW4LP6GsONAynYjBm51bWY4zHbDI7OplKNEdo8dUPnx219EGpJ-omJxNxZk95JEYromnahshGIdyG-BxG1abGp46nTgC7eZEPzaKgW1steaj8Dhz9LCuS5bYfx8SbEi5i9PFTyAqKIthqWw3dT9Jnw"/>
+<!-- Scanning Laser Effect (CSS) -->
+<div class="absolute left-0 right-0 h-1 bg-primary shadow-[0_0_8px_rgba(0,40,142,0.8)] opacity-70 animate-[scan_2s_linear_infinite]" style="top: 0%;"></div>
+<style>
+                            @keyframes scan {
+                                0% { top: 0%; opacity: 0; }
+                                10% { opacity: 0.8; }
+                                90% { opacity: 0.8; }
+                                100% { top: 100%; opacity: 0; }
+                            }
+                        </style>
+</div>
+</div>
+</div>
+<!-- Right Panel: Controls and Status -->
+<aside class="w-full lg:w-96 flex flex-col gap-gutter shrink-0 overflow-y-auto">
+<!-- Status Card -->
+<div class="bg-surface border border-outline-variant rounded-lg p-gutter">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-density-medium border-b border-outline-variant pb-unit">System Status</h3>
+<div class="flex items-center justify-between mb-density-medium">
+<div class="flex items-center gap-density-high">
+<div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.6)]"></div>
+<span class="font-body-md text-body-md font-semibold text-on-surface">Canon DR-G2110</span>
+</div>
+<span class="font-label-sm text-label-sm uppercase bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Connected</span>
+</div>
+<div class="grid grid-cols-2 gap-density-medium">
+<div class="bg-surface-container-low p-density-medium rounded border border-outline-variant">
+<span class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Current Batch</span>
+<span class="font-body-md text-body-md font-bold text-primary">BATCH-AUG-042</span>
+</div>
+<div class="bg-surface-container-low p-density-medium rounded border border-outline-variant">
+<span class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Speed</span>
+<span class="font-body-md text-body-md font-bold text-on-surface">120 PPM</span>
+</div>
+<div class="bg-surface-container-low p-density-medium rounded border border-outline-variant">
+<span class="block font-label-sm text-label-sm text-on-surface-variant mb-1">File</span>
+<span class="font-body-md text-body-md font-bold text-on-surface">14 <span class="text-on-surface-variant font-normal">/ 125</span></span>
+</div>
+<div class="bg-surface-container-low p-density-medium rounded border border-outline-variant">
+<span class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Total Pages</span>
+<span class="font-body-md text-body-md font-bold text-on-surface">45 <span class="text-on-surface-variant font-normal">/ 18,450</span></span>
+</div>
+</div>
+</div>
+<!-- Control Actions -->
+<div class="bg-surface border border-outline-variant rounded-lg p-gutter">
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary font-headline-md text-headline-md py-4 rounded-lg flex justify-center items-center gap-density-medium transition-colors shadow-md mb-density-medium">
+<span class="material-symbols-outlined" data-icon="play_circle" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+                        START SCAN
+                    </button>
+<div class="grid grid-cols-2 gap-density-medium">
+<button class="bg-surface-container-low border border-outline-variant hover:bg-surface-container text-on-surface font-label-md text-label-md py-3 rounded flex justify-center items-center gap-unit transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="pause_circle">pause_circle</span>
+                            Pause
+                        </button>
+<button class="bg-surface-container-low border border-outline-variant hover:bg-error-container text-error font-label-md text-label-md py-3 rounded flex justify-center items-center gap-unit transition-colors">
+<span class="material-symbols-outlined" data-icon="stop_circle">stop_circle</span>
+                            Stop
+                        </button>
+</div>
+</div>
+<!-- Multi-stage Progress Indicators -->
+<div class="bg-surface border border-outline-variant rounded-lg p-gutter flex-1">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-density-medium border-b border-outline-variant pb-unit">Pipeline Progress</h3>
+<div class="flex flex-col gap-density-medium">
+<!-- Scanning Progress -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="document_scanner">document_scanner</span>
+                                    Scanning
+                                </span>
+<span class="font-label-sm text-label-sm text-primary font-bold">78%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary progress-bar-animated bg-[linear-gradient(90deg,rgba(0,40,142,1)_0%,rgba(30,64,175,1)_50%,rgba(0,40,142,1)_100%)]" style="width: 78%"></div>
+</div>
+</div>
+<!-- OCR Progress -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="translate">translate</span>
+                                    OCR Processing
+                                </span>
+<span class="font-label-sm text-label-sm text-primary font-bold">65%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary transition-all duration-500" style="width: 65%"></div>
+</div>
+</div>
+<!-- PDF Generation Progress -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+                                    PDF Generation
+                                </span>
+<span class="font-label-sm text-label-sm text-primary font-bold">90%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary transition-all duration-500" style="width: 90%"></div>
+</div>
+</div>
+<!-- Drive Upload Progress -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="cloud_upload">cloud_upload</span>
+                                    Drive Upload
+                                </span>
+<span class="font-label-sm text-label-sm text-primary font-bold">72%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary transition-all duration-500" style="width: 72%"></div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component) - Mobile Only -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-t-xl transition-all duration-300">
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-variant p-2 rounded" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-sm text-label-sm mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-variant p-2 rounded" href="#">
+<span class="material-symbols-outlined" data-icon="Assessment">file_open</span>
+<span class="font-label-sm text-label-sm mt-1">Reports</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:bg-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label-sm text-label-sm mt-1">Alerts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:bg-surface-variant p-2 rounded" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

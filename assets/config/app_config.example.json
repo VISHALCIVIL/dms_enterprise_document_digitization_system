@@ -1,0 +1,14 @@
+{
+  "google_oauth": {
+    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "client_secret": "YOUR_GOOGLE_CLIENT_SECRET",
+    "redirect_uri": "http://localhost:8088/",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
+  "firebase": {
+    "project_id": "scandigitize-enterprise",
+    "storage_bucket": "scandigitize-enterprise.appspot.com"
+  }
+}

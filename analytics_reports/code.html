@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ScanDigitize - Daily Report &amp; Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#a8b8ff",
+                        "on-tertiary-container": "#ffa583",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface-variant": "#444653",
+                        "secondary": "#505f76",
+                        "inverse-surface": "#2d3133",
+                        "secondary-container": "#d0e1fb",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b8c4ff",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-container-high": "#e6e8ea",
+                        "on-tertiary-fixed": "#380d00",
+                        "surface-container-low": "#f2f4f6",
+                        "outline": "#757684",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "tertiary": "#611e00",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#802a00",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#54647a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "on-primary-fixed": "#001453",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-fixed": "#ffdbce",
+                        "tertiary-container": "#872d00",
+                        "on-primary-fixed-variant": "#173bab",
+                        "outline-variant": "#c4c5d5",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface": "#f7f9fb",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dde1ff",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-tint": "#3755c3",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb59a",
+                        "primary": "#00288e",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#1e40af"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "density-high": "8px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "density-medium": "16px",
+                        "density-low": "24px",
+                        "container-padding-mobile": "16px",
+                        "container-padding-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-40 bg-surface border-b border-outline-variant px-container-padding-mobile py-density-medium flex justify-between items-center md:hidden">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">Daily Report</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">tune</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="p-container-padding-mobile md:p-container-padding-desktop flex flex-col gap-density-low max-w-7xl mx-auto">
+<!-- Date Range Picker -->
+<section class="flex overflow-x-auto hide-scrollbar gap-unit py-unit -mx-container-padding-mobile px-container-padding-mobile md:mx-0 md:px-0">
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-transform active:scale-95">Today</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low font-label-md text-label-md transition-transform active:scale-95">Yesterday</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low font-label-md text-label-md transition-transform active:scale-95">This Week</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center gap-2 transition-transform active:scale-95">
+                Custom
+                <span class="material-symbols-outlined text-[16px]">calendar_month</span>
+</button>
+</section>
+<!-- Summary Cards Bento Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-density-medium">
+<!-- Total Files -->
+<div class="bg-surface border border-outline-variant rounded-xl p-density-medium flex flex-col gap-unit relative overflow-hidden shadow-sm">
+<div class="absolute top-0 right-0 w-16 h-16 bg-primary-container opacity-20 rounded-bl-full"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">description</span>
+<h3 class="font-label-sm text-label-sm uppercase tracking-wider">Total Files</h3>
+</div>
+<p class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface mt-2">1,248</p>
+<div class="flex items-center gap-1 text-[#059669] bg-[#d1fae5] w-max px-2 py-0.5 rounded font-label-sm text-label-sm mt-1">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span>12%</span>
+</div>
+</div>
+<!-- Total Pages -->
+<div class="bg-surface border border-outline-variant rounded-xl p-density-medium flex flex-col gap-unit relative overflow-hidden shadow-sm col-span-1 md:col-span-1">
+<div class="absolute top-0 right-0 w-16 h-16 bg-secondary-container opacity-20 rounded-bl-full"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">file_copy</span>
+<h3 class="font-label-sm text-label-sm uppercase tracking-wider">Total Pages</h3>
+</div>
+<p class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface mt-2">14,892</p>
+<div class="flex items-center gap-1 text-[#059669] bg-[#d1fae5] w-max px-2 py-0.5 rounded font-label-sm text-label-sm mt-1">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span>8%</span>
+</div>
+</div>
+<!-- Total Uploaded -->
+<div class="bg-surface border border-outline-variant rounded-xl p-density-medium flex flex-col gap-unit relative overflow-hidden shadow-sm col-span-2 md:col-span-2 bg-gradient-to-br from-surface to-surface-container-low">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+<h3 class="font-label-sm text-label-sm uppercase tracking-wider">Successfully Uploaded</h3>
+</div>
+<span class="text-primary font-label-md text-label-md bg-primary-container/20 px-2 py-1 rounded">1.2 GB</span>
+</div>
+<p class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface mt-2">1,190 <span class="font-body-sm text-body-sm text-on-surface-variant font-normal">files synced</span></p>
+<div class="w-full bg-surface-variant rounded-full h-1.5 mt-3">
+<div class="bg-primary h-1.5 rounded-full" style="width: 95%"></div>
+</div>
+<p class="text-right font-label-sm text-label-sm text-on-surface-variant mt-1">95% Success Rate</p>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="flex flex-col gap-density-medium">
+<!-- Scanning Progress Line Chart -->
+<div class="bg-surface border border-outline-variant rounded-xl shadow-sm flex flex-col">
+<div class="p-density-medium border-b border-outline-variant flex justify-between items-center">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Scanning Progress</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Pages scanned last 7 days</p>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-density-medium h-64 relative flex items-end justify-between pt-10">
+<!-- Faux Line Chart Visualization -->
+<div class="absolute inset-0 p-density-medium pt-10 flex items-end justify-between pointer-events-none">
+<!-- Y-Axis Grid Lines -->
+<div class="absolute left-0 right-0 top-10 border-t border-dashed border-outline-variant/50"></div>
+<div class="absolute left-0 right-0 top-24 border-t border-dashed border-outline-variant/50"></div>
+<div class="absolute left-0 right-0 top-36 border-t border-dashed border-outline-variant/50"></div>
+<!-- Connecting Line (SVG SVG path placeholder for visual) -->
+<svg class="absolute inset-0 h-full w-full" preserveaspectratio="none">
+<path d="M 40,160 L 100,120 L 160,140 L 220,80 L 280,100 L 340,40" fill="none" stroke="#00288e" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<path d="M 40,160 L 100,120 L 160,140 L 220,80 L 280,100 L 340,40 L 340,200 L 40,200 Z" fill="url(#gradient)" opacity="0.1"></path>
+<defs>
+<lineargradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00288e"></stop>
+<stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+</svg>
+<!-- Data Points -->
+<div class="flex flex-col items-center gap-2 z-10" style="height: 20%">
+<div class="w-3 h-3 rounded-full bg-surface border-2 border-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Mon</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10" style="height: 50%">
+<div class="w-3 h-3 rounded-full bg-surface border-2 border-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tue</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10" style="height: 35%">
+<div class="w-3 h-3 rounded-full bg-surface border-2 border-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Wed</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10" style="height: 80%">
+<div class="w-3 h-3 rounded-full bg-surface border-2 border-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Thu</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10" style="height: 65%">
+<div class="w-3 h-3 rounded-full bg-surface border-2 border-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fri</span>
+</div>
+<div class="flex flex-col items-center gap-2 z-10" style="height: 100%">
+<div class="w-3 h-3 rounded-full bg-primary border-2 border-white shadow-md relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface px-2 py-1 rounded font-label-sm text-label-sm whitespace-nowrap">
+                                    3,420
+                                </div>
+</div>
+<span class="font-label-sm text-label-sm font-bold text-on-surface">Sat</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Area Performance Bar Chart -->
+<div class="bg-surface border border-outline-variant rounded-xl shadow-sm flex flex-col">
+<div class="p-density-medium border-b border-outline-variant flex justify-between items-center">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Area Performance</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Volume by location</p>
+</div>
+</div>
+<div class="p-density-medium flex flex-col gap-4">
+<!-- Bar 1 -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface">Umred</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">6,240 pages</span>
+</div>
+<div class="w-full bg-surface-container rounded-sm h-3 overflow-hidden flex">
+<div class="bg-primary h-full" style="width: 45%"></div>
+</div>
+</div>
+<!-- Bar 2 -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface">Wani</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">4,890 pages</span>
+</div>
+<div class="w-full bg-surface-container rounded-sm h-3 overflow-hidden flex">
+<div class="bg-secondary h-full" style="width: 35%"></div>
+</div>
+</div>
+<!-- Bar 3 -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md text-on-surface">Majri</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">3,762 pages</span>
+</div>
+<div class="w-full bg-surface-container rounded-sm h-3 overflow-hidden flex">
+<div class="bg-tertiary-container h-full" style="width: 20%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Export Actions -->
+<section class="flex gap-density-medium mt-4">
+<button class="flex-1 flex items-center justify-center gap-2 bg-surface border border-outline-variant text-on-surface py-3 rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                Export PDF
+            </button>
+<button class="flex-1 flex items-center justify-center gap-2 bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-[20px]">table_view</span>
+                Export Excel
+            </button>
+</section>
+</main>
+<!-- BottomNavBar (from JSON, md:hidden) -->
+<nav class="md:hidden bg-surface dark:bg-inverse-surface shadow-lg shadow-md fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe rounded-t-xl border-t-0">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-variant transition-all duration-300 w-16 py-1 rounded-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span class="font-label-md text-label-md mt-1">Dashboard</span>
+</button>
+<!-- Active State: Reports matches the Analytics intent -->
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 active:bg-surface-variant transition-all duration-300 w-20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">file_open</span>
+<span class="font-label-md text-label-md mt-1">Reports</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-variant transition-all duration-300 w-16 py-1 rounded-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="font-label-md text-label-md mt-1">Alerts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:bg-surface-variant transition-all duration-300 w-16 py-1 rounded-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</button>
+</nav>
+<!-- SideNavBar (from JSON, hidden md:flex) -->
+<!-- Suppressed: The prompt asks specifically for "Mobile" Daily Report & Analytics. The SideNavBar is hidden as per platform layout anchors. -->
+</body></html>

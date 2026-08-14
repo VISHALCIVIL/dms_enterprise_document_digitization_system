@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ScanDigitize - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#a8b8ff",
+                    "on-tertiary-container": "#ffa583",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-surface-variant": "#444653",
+                    "secondary": "#505f76",
+                    "inverse-surface": "#2d3133",
+                    "secondary-container": "#d0e1fb",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#b8c4ff",
+                    "primary-fixed-dim": "#b8c4ff",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-container-high": "#e6e8ea",
+                    "on-tertiary-fixed": "#380d00",
+                    "surface-container-low": "#f2f4f6",
+                    "outline": "#757684",
+                    "on-background": "#191c1e",
+                    "surface-container": "#eceef0",
+                    "tertiary": "#611e00",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#191c1e",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed-variant": "#802a00",
+                    "background": "#f7f9fb",
+                    "on-secondary-container": "#54647a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-dim": "#d8dadc",
+                    "on-primary-fixed": "#001453",
+                    "surface-bright": "#f7f9fb",
+                    "tertiary-fixed": "#ffdbce",
+                    "tertiary-container": "#872d00",
+                    "on-primary-fixed-variant": "#173bab",
+                    "outline-variant": "#c4c5d5",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#dde1ff",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#3755c3",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb59a",
+                    "primary": "#00288e",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#1e40af"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "density-high": "8px",
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "density-medium": "16px",
+                    "density-low": "24px",
+                    "container-padding-mobile": "16px",
+                    "container-padding-desktop": "32px"
+            },
+            "fontFamily": {
+                    "headline-md": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "headline-lg-mobile": [
+                            "Inter"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Inter"
+                    ],
+                    "label-sm": [
+                            "Inter"
+                    ],
+                    "display-lg": [
+                            "Inter"
+                    ],
+                    "label-md": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "headline-md": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "28px",
+                            {
+                                    "lineHeight": "36px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-sm": [
+                            "11px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "display-lg": [
+                            "36px",
+                            {
+                                    "lineHeight": "44px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background h-screen flex overflow-hidden">
+<!-- SideNavBar (from JSON logic) -->
+<nav class="bg-surface dark:bg-inverse-surface border-r border-outline-variant dark:border-outline fixed left-0 h-full w-64 flex flex-col py-density-low z-40">
+<div class="px-6 mb-8 flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">ScanDigitize</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Enterprise Node 04</span>
+</div>
+<div class="flex-1 overflow-y-auto px-4 space-y-1">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-inverse-primary font-bold border-l-4 border-primary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="font-label-md text-label-md">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">screenshot_region</span>
+<span class="font-label-md text-label-md">Live Scanning</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">cloud_upload</span>
+<span class="font-label-md text-label-md">Upload Queue</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Archive</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-md text-label-md">Statistics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-on-surface-variant transition-colors duration-200 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+<div class="px-6 mt-6 pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold">
+                    OP
+                </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Operator Profile</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col h-full bg-surface-container-lowest overflow-hidden">
+<!-- TopAppBar (from JSON) -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline h-16 flex justify-between items-center w-full px-container-padding-desktop z-30 shrink-0">
+<div class="font-headline-md text-headline-md font-extrabold text-primary dark:text-inverse-primary">
+                ScanDigitize Admin
+             </div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-transform scale-95 active:scale-90">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-transform scale-95 active:scale-90">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<div class="flex-1 overflow-y-auto p-container-padding-desktop space-y-8">
+<!-- Page Header & Connection Status Panel -->
+<div class="flex justify-between items-start mb-8">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface">Operator Dashboard</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">System Overview &amp; Active Queue</p>
+</div>
+<!-- Connection Status Panel (Glassmorphism inspired card) -->
+<div class="bg-surface border border-outline-variant rounded-xl p-4 flex gap-6 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">print</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Scanner</span>
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#10b981]"></div> Connected</span>
+</div>
+</div>
+<div class="w-px bg-outline-variant h-8"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">wifi</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Internet</span>
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#10b981]"></div> Active</span>
+</div>
+</div>
+<div class="w-px bg-outline-variant h-8"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">add_to_drive</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Google Drive</span>
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#3b82f6]"></div> Synced</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Large Statistics Grid (Bento style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Scan Stats -->
+<div class="bg-surface border border-outline-variant rounded-xl p-6 flex flex-col justify-between shadow-sm col-span-1 md:col-span-2 lg:col-span-2 bg-gradient-to-br from-surface to-surface-container-low">
+<div class="flex justify-between items-start mb-4">
+<div class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Today's Scanning</div>
+<span class="material-symbols-outlined text-primary">document_scanner</span>
+</div>
+<div class="grid grid-cols-2 gap-8 mt-4">
+<div>
+<div class="font-display-lg text-display-lg text-on-surface">125</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Files Scanned</div>
+</div>
+<div>
+<div class="font-display-lg text-display-lg text-on-surface">18,450</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pages Scanned</div>
+</div>
+</div>
+</div>
+<!-- OCR Stats -->
+<div class="bg-surface border border-outline-variant rounded-xl p-6 flex flex-col shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">OCR Processing</div>
+<span class="material-symbols-outlined text-primary">text_fields</span>
+</div>
+<div class="mt-auto">
+<div class="font-display-lg text-display-lg text-on-surface">17,200</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Pages Completed</div>
+<div class="w-full bg-surface-variant h-1.5 rounded-full mt-3">
+<div class="bg-primary h-1.5 rounded-full w-[93%]"></div>
+</div>
+</div>
+</div>
+<!-- Upload Stats -->
+<div class="bg-surface border border-outline-variant rounded-xl p-6 flex flex-col shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Cloud Uploads</div>
+<span class="material-symbols-outlined text-primary">cloud_done</span>
+</div>
+<div class="mt-auto">
+<div class="font-display-lg text-display-lg text-on-surface">120</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Files Uploaded</div>
+</div>
+</div>
+<!-- Mini Stats Row -->
+<div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-3 gap-4">
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex justify-between items-center">
+<div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Pages Uploaded</div>
+<div class="font-headline-md text-headline-md text-on-surface">17,500</div>
+</div>
+<span class="material-symbols-outlined text-outline">description</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex justify-between items-center border-l-4 border-l-[#f59e0b]">
+<div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Pending Uploads</div>
+<div class="font-headline-md text-headline-md text-on-surface">5</div>
+</div>
+<span class="material-symbols-outlined text-outline">pending</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex justify-between items-center border-l-4 border-l-surface-variant">
+<div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Failed Uploads</div>
+<div class="font-headline-md text-headline-md text-on-surface">0</div>
+</div>
+<span class="material-symbols-outlined text-outline">error</span>
+</div>
+</div>
+</div>
+<!-- "Recent Batches" Data Table -->
+<div class="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden mt-8">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-on-surface">Recent Batches</h2>
+<button class="text-primary font-label-md text-label-md hover:underline flex items-center gap-1">
+                        View All <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-outline-variant">
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Batch ID</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Area / Dept</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap text-right">Pages</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Status</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-outline-variant hover:bg-blue-50/30 transition-colors h-12">
+<td class="py-2 px-6 font-medium">BCH-2023-1102-A</td>
+<td class="py-2 px-6">HR / Records</td>
+<td class="py-2 px-6 text-right">450</td>
+<td class="py-2 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm uppercase font-bold tracking-wide">
+                                        OCR Done
+                                    </span>
+</td>
+<td class="py-2 px-6 text-right">
+<button class="text-primary hover:text-primary-container p-1"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-blue-50/30 transition-colors h-12">
+<td class="py-2 px-6 font-medium">BCH-2023-1102-B</td>
+<td class="py-2 px-6">Finance / Audit</td>
+<td class="py-2 px-6 text-right">1,200</td>
+<td class="py-2 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#e0e7ff] text-[#3730a3] font-label-sm text-label-sm uppercase font-bold tracking-wide gap-1">
+<span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Uploading
+                                    </span>
+</td>
+<td class="py-2 px-6 text-right">
+<button class="text-primary hover:text-primary-container p-1"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-blue-50/30 transition-colors h-12">
+<td class="py-2 px-6 font-medium">BCH-2023-1102-C</td>
+<td class="py-2 px-6">Legal / Contracts</td>
+<td class="py-2 px-6 text-right">85</td>
+<td class="py-2 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#f1f5f9] text-[#475569] font-label-sm text-label-sm uppercase font-bold tracking-wide">
+                                        Queued
+                                    </span>
+</td>
+<td class="py-2 px-6 text-right">
+<button class="text-primary hover:text-primary-container p-1"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -24,6 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _folderPathController = TextEditingController();
   final TextEditingController _gitHubTokenController = TextEditingController();
   final TextEditingController _serviceAccountController = TextEditingController();
+  final TextEditingController _clientIdController = TextEditingController();
 
   FolderScanMetrics? _metrics;
   GitHubReleaseInfo? _releaseInfo;
@@ -40,6 +41,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadInitialFolder();
     _loadGitHubIntegration();
+    _loadGoogleClientId();
+  }
+
+  void _loadGoogleClientId() async {
+    final clientId = await _driveService.getClientId();
+    _clientIdController.text = clientId;
   }
 
   void _loadInitialFolder() async {
@@ -71,20 +78,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _signInGoogleDrive() async {
+    final clientId = _clientIdController.text.trim();
+    if (clientId.isNotEmpty) {
+      await _driveService.setClientId(clientId);
+    }
+
     setState(() {
       _isSigningInDrive = true;
       _driveAuthMessage = null;
     });
 
-    final success = await _driveService.signInWithGoogle();
+    final success = await _driveService.signInWithGoogle(customClientId: clientId);
 
     if (mounted) {
       setState(() {
         _isSigningInDrive = false;
         if (success) {
-          _driveAuthMessage = 'Google Drive API successfully authenticated as: ${_driveService.authenticatedUserEmail}';
+          _driveAuthMessage = 'Google Drive API authenticated as: ${_driveService.authenticatedUserEmail}';
         } else {
-          _driveAuthMessage = 'Google Drive Sign-In was cancelled or failed. Please check your credentials.';
+          _driveAuthMessage = 'Google Drive Sign-In was cancelled or failed. Verify your Client ID.';
         }
       });
     }
@@ -194,6 +206,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: StitchTypography.bodySm,
                 ),
                 const SizedBox(height: 20),
+
+                Text('Google OAuth Client ID', style: StitchTypography.labelMd),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _clientIdController,
+                  decoration: InputDecoration(
+                    hintText: '448747097814-sa70k470t60lfh2lhok2b1h90p9jbljl.apps.googleusercontent.com',
+                    prefixIcon: const Icon(Icons.badge_outlined, color: StitchColors.primary),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 Row(
                   children: [

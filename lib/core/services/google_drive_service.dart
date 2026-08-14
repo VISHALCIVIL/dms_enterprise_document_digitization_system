@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../errors/failures.dart';
 
@@ -29,26 +30,53 @@ class GoogleDriveService {
 
   GoogleDriveService._internal();
 
+  static const String _storageKeyClientId = 'scandigitize_google_client_id';
+  static const String _storageKeyClientSecret = 'scandigitize_google_client_secret';
+  static const String defaultClientId = '448747097814-sa70k470t60lfh2lhok2b1h90p9jbljl.apps.googleusercontent.com';
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
   drive.DriveApi? _driveApi;
   String? _authenticatedUserEmail;
+  String? _customClientId;
 
   bool get isAuthenticated => _driveApi != null;
   String? get authenticatedUserEmail => _authenticatedUserEmail;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [
-      'email',
-      'https://www.googleapis.com/auth/drive.file',
-    ],
-  );
+  Future<String> getClientId() async {
+    final saved = await _storage.read(key: _storageKeyClientId);
+    if (saved != null && saved.isNotEmpty) {
+      _customClientId = saved;
+      return saved;
+    }
+    return defaultClientId;
+  }
 
-  /// Interactive Google Sign-In handshake
-  Future<bool> signInWithGoogle() async {
+  Future<void> setClientId(String clientId) async {
+    _customClientId = clientId.trim();
+    await _storage.write(key: _storageKeyClientId, value: clientId.trim());
+  }
+
+  Future<void> setClientSecret(String clientSecret) async {
+    await _storage.write(key: _storageKeyClientSecret, value: clientSecret.trim());
+  }
+
+  /// Interactive Google Sign-In handshake using user's Client ID
+  Future<bool> signInWithGoogle({String? customClientId}) async {
     try {
-      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      final clientId = customClientId ?? await getClientId();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: clientId.isNotEmpty ? clientId : null,
+        scopes: [
+          'email',
+          'https://www.googleapis.com/auth/drive.file',
+        ],
+      );
+
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
       if (account == null) return false;
 
-      final httpClient = await _googleSignIn.authenticatedClient();
+      final httpClient = await googleSignIn.authenticatedClient();
       if (httpClient != null) {
         _driveApi = drive.DriveApi(httpClient);
         _authenticatedUserEmail = account.email;
@@ -56,7 +84,6 @@ class GoogleDriveService {
       }
       return false;
     } catch (e) {
-      // Fallback for OAuth client authorization
       return false;
     }
   }
@@ -93,7 +120,7 @@ class GoogleDriveService {
   }) async {
     if (_driveApi == null) {
       throw const GoogleDriveNotConfiguredFailure(
-        'Google Drive API Integration is not authenticated. Please Sign In to your Google Account in Settings to upload data to Google Drive.',
+        'Google Drive API Integration is not authenticated. Please Sign In with Google Drive in Settings using your Client ID.',
       );
     }
 

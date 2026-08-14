@@ -24,7 +24,6 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
   bool _isLoading = true;
   bool _isSyncing = false;
   String? _errorMessage;
-  bool _isDriveUnconfigured = false;
 
   @override
   void initState() {
@@ -48,7 +47,6 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
     setState(() {
       _isSyncing = true;
       _errorMessage = null;
-      _isDriveUnconfigured = false;
     });
 
     final syncResult = await _syncManager.syncPendingQueue(force: true);
@@ -59,7 +57,6 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
         _pendingFiles = updatedFiles;
         _isSyncing = false;
         if (syncResult.isUnconfigured) {
-          _isDriveUnconfigured = true;
           _errorMessage = syncResult.errorMessage ?? 'Google Drive API Integration is not configured or authenticated. No data was uploaded to Google Drive.';
           _showErrorPromptDialog(_errorMessage!);
         } else if (syncResult.failedCount > 0) {

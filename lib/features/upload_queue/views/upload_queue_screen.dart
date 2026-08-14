@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/stitch_colors.dart';
 import '../../../core/theme/stitch_typography.dart';
 import '../../../core/widgets/app_card.dart';
@@ -22,7 +23,8 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
   List<Map<String, dynamic>> _pendingFiles = [];
   bool _isLoading = true;
   bool _isSyncing = false;
-  String? _syncMessage;
+  String? _errorMessage;
+  bool _isDriveUnconfigured = false;
 
   @override
   void initState() {
@@ -45,21 +47,101 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
   void _triggerGoogleSync() async {
     setState(() {
       _isSyncing = true;
-      _syncMessage = 'Syncing pending files to Google Drive...';
+      _errorMessage = null;
+      _isDriveUnconfigured = false;
     });
 
-    final syncedCount = await _syncManager.syncPendingQueue(force: true);
+    final syncResult = await _syncManager.syncPendingQueue(force: true);
     final updatedFiles = await _sqlite.getAllFiles();
 
     if (mounted) {
       setState(() {
         _pendingFiles = updatedFiles;
         _isSyncing = false;
-        _syncMessage = syncedCount > 0
-            ? 'Successfully synchronized $syncedCount document(s) to Google Drive!'
-            : 'All documents are already fully synchronized to Google Drive.';
+        if (syncResult.isUnconfigured) {
+          _isDriveUnconfigured = true;
+          _errorMessage = syncResult.errorMessage ?? 'Google Drive API Integration is not configured or authenticated. No data was uploaded to Google Drive.';
+          _showErrorPromptDialog(_errorMessage!);
+        } else if (syncResult.failedCount > 0) {
+          _errorMessage = syncResult.errorMessage ?? 'Google Drive synchronization failed for ${syncResult.failedCount} file(s).';
+          _showErrorPromptDialog(_errorMessage!);
+        }
       });
     }
+  }
+
+  void _showErrorPromptDialog(String errorMsg) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: StitchColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Row(
+            children: [
+              const Icon(Icons.error_outline, color: StitchColors.error, size: 28),
+              const SizedBox(width: 10),
+              Text('Google Drive Sync Error', style: StitchTypography.headlineMd.copyWith(color: StitchColors.error)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: StitchColors.errorContainer.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: StitchColors.errorContainer),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cloud_off, color: StitchColors.error),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'NO DATA WAS UPLOADED TO GOOGLE DRIVE!',
+                        style: StitchTypography.labelMd.copyWith(color: StitchColors.error, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                errorMsg,
+                style: StitchTypography.bodySm,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Please configure your Google OAuth Client ID & Secret in Settings or complete authorization to enable Google Drive file uploads.',
+                style: StitchTypography.bodySm.copyWith(color: StitchColors.outline),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Dismiss'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go('/settings');
+              },
+              icon: const Icon(Icons.settings),
+              label: const Text('Configure Google Drive API'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: StitchColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -135,23 +217,34 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
           ),
           const SizedBox(height: 20),
 
-          if (_syncMessage != null) ...[
+          if (_errorMessage != null) ...[
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: StitchColors.emeraldContainer,
+                color: StitchColors.errorContainer.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: StitchColors.emerald),
+                border: Border.all(color: StitchColors.error),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: StitchColors.emeraldText, size: 20),
+                  const Icon(Icons.error, color: StitchColors.error, size: 22),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      _syncMessage!,
-                      style: StitchTypography.labelMd.copyWith(color: StitchColors.emeraldText),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('GOOGLE DRIVE API INTEGRATION ERROR:', style: StitchTypography.labelMd.copyWith(color: StitchColors.error, fontWeight: FontWeight.bold)),
+                        Text(_errorMessage!, style: StitchTypography.bodySm.copyWith(color: StitchColors.error)),
+                      ],
                     ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => context.go('/settings'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: StitchColors.error,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Configure API'),
                   ),
                 ],
               ),
@@ -195,6 +288,9 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
                   if (syncStatus == 'FULLY_SYNCED') {
                     bType = BadgeType.success;
                     badgeText = 'GOOGLE DRIVE SYNCED';
+                  } else if (syncStatus == 'NOT_CONFIGURED') {
+                    bType = BadgeType.error;
+                    badgeText = 'API NOT CONFIGURD';
                   } else if (syncStatus == 'SYNC_ERROR') {
                     bType = BadgeType.error;
                     badgeText = 'SYNC FAILED';
@@ -210,12 +306,22 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
                       decoration: BoxDecoration(
                         color: syncStatus == 'FULLY_SYNCED'
                             ? StitchColors.emeraldContainer
-                            : StitchColors.surfaceContainerLow,
+                            : (syncStatus == 'NOT_CONFIGURED' || syncStatus == 'SYNC_ERROR'
+                                ? StitchColors.errorContainer.withValues(alpha: 0.3)
+                                : StitchColors.surfaceContainerLow),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        syncStatus == 'FULLY_SYNCED' ? Icons.cloud_done : Icons.picture_as_pdf,
-                        color: syncStatus == 'FULLY_SYNCED' ? StitchColors.emeraldText : StitchColors.primary,
+                        syncStatus == 'FULLY_SYNCED'
+                            ? Icons.cloud_done
+                            : (syncStatus == 'NOT_CONFIGURED' || syncStatus == 'SYNC_ERROR'
+                                ? Icons.cloud_off
+                                : Icons.picture_as_pdf),
+                        color: syncStatus == 'FULLY_SYNCED'
+                            ? StitchColors.emeraldText
+                            : (syncStatus == 'NOT_CONFIGURED' || syncStatus == 'SYNC_ERROR'
+                                ? StitchColors.error
+                                : StitchColors.primary),
                       ),
                     ),
                     title: Text(row['file_name'] ?? 'Document.pdf', style: StitchTypography.labelMd),

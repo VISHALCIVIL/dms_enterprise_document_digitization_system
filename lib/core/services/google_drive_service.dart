@@ -3,6 +3,13 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import '../errors/failures.dart';
 
+class GoogleDriveNotConfiguredFailure extends Failure {
+  final String errorMessage;
+  const GoogleDriveNotConfiguredFailure(this.errorMessage) : super(errorMessage);
+  @override
+  String get message => errorMessage;
+}
+
 class DriveUploadProgress {
   final int bytesUploaded;
   final int totalBytes;
@@ -31,8 +38,9 @@ class GoogleDriveService {
     required String batch,
   }) async {
     if (_driveApi == null) {
-      // Return simulated folder ID if offline / credentials not provided
-      return 'drive_folder_simulated_${project}_$batch';
+      throw const GoogleDriveNotConfiguredFailure(
+        'Google Drive API Integration is not configured or authenticated. No folders or files were uploaded.',
+      );
     }
 
     try {
@@ -44,12 +52,17 @@ class GoogleDriveService {
       }
       return parentId;
     } catch (e) {
+      if (e is GoogleDriveNotConfiguredFailure) rethrow;
       throw GoogleDriveFailure('Failed to construct Google Drive folder hierarchy: $e');
     }
   }
 
   Future<String> _getOrCreateFolder(String folderName, String parentId) async {
-    if (_driveApi == null) return 'folder_$folderName';
+    if (_driveApi == null) {
+      throw const GoogleDriveNotConfiguredFailure(
+        'Google Drive API Integration is not configured or authenticated.',
+      );
+    }
 
     final query = "mimeType = 'application/vnd.google-apps.folder' and name = '$folderName' and '$parentId' in parents and trashed = false";
     final fileList = await _driveApi!.files.list(q: query, spaces: 'drive');
@@ -75,9 +88,9 @@ class GoogleDriveService {
     Function(DriveUploadProgress)? onProgress,
   }) async {
     if (_driveApi == null) {
-      // Simulate successful upload ID for offline / mock testing
-      onProgress?.call(const DriveUploadProgress(100, 100, 1.0));
-      return 'gdrive_file_id_${DateTime.now().millisecondsSinceEpoch}';
+      throw const GoogleDriveNotConfiguredFailure(
+        'Google Drive API Integration is not authenticated. File was NOT uploaded to Google Drive.',
+      );
     }
 
     try {
@@ -102,6 +115,7 @@ class GoogleDriveService {
 
       return uploadedFile.id!;
     } catch (e) {
+      if (e is GoogleDriveNotConfiguredFailure) rethrow;
       throw GoogleDriveFailure('Google Drive upload failed: $e');
     }
   }

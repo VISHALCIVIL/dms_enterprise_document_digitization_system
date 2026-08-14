@@ -4,9 +4,24 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../database/sqlite_database_service.dart';
 import '../services/google_drive_service.dart';
+import '../errors/failures.dart';
 import '../../features/documents/domain/scanned_file_model.dart';
 
-enum SyncStatusState { idle, syncing, offline, error, completed }
+enum SyncStatusState { idle, syncing, offline, error, unconfigured, completed }
+
+class SyncResult {
+  final int syncedCount;
+  final int failedCount;
+  final String? errorMessage;
+  final bool isUnconfigured;
+
+  const SyncResult({
+    required this.syncedCount,
+    required this.failedCount,
+    this.errorMessage,
+    this.isUnconfigured = false,
+  });
+}
 
 class SyncManager {
   final SqliteDatabaseService _sqlite = SqliteDatabaseService.instance;
@@ -26,12 +41,15 @@ class SyncManager {
         _firestore = firestore;
 
   /// Trigger sync process. Drains SQLite pending uploads to Google Drive & Firestore.
-  Future<int> syncPendingQueue({bool force = false}) async {
-    if (_isSyncing) return 0;
+  Future<SyncResult> syncPendingQueue({bool force = false}) async {
+    if (_isSyncing) return const SyncResult(syncedCount: 0, failedCount: 0);
     _isSyncing = true;
     _statusController.add(SyncStatusState.syncing);
 
     int syncedCount = 0;
+    int failedCount = 0;
+    String? lastErrorMessage;
+    bool driveUnconfigured = false;
 
     try {
       if (!force) {
@@ -39,7 +57,11 @@ class SyncManager {
         if (connectivity.contains(ConnectivityResult.none)) {
           _statusController.add(SyncStatusState.offline);
           _isSyncing = false;
-          return 0;
+          return const SyncResult(
+            syncedCount: 0,
+            failedCount: 0,
+            errorMessage: 'Offline: No network connection available.',
+          );
         }
       }
 
@@ -49,20 +71,46 @@ class SyncManager {
       if (unSyncedRows.isEmpty) {
         _statusController.add(SyncStatusState.idle);
         _isSyncing = false;
-        return 0;
+        return const SyncResult(syncedCount: 0, failedCount: 0);
       }
 
       for (final row in unSyncedRows) {
         final fileModel = ScannedFileModel.fromSqliteMap(row);
-        await _processSingleFileSync(fileModel);
-        syncedCount++;
+        try {
+          await _processSingleFileSync(fileModel);
+          syncedCount++;
+        } catch (e) {
+          failedCount++;
+          if (e is GoogleDriveNotConfiguredFailure) {
+            driveUnconfigured = true;
+            lastErrorMessage = e.message;
+          } else {
+            lastErrorMessage = e.toString();
+          }
+        }
       }
 
-      _statusController.add(SyncStatusState.completed);
-      return syncedCount;
+      if (driveUnconfigured) {
+        _statusController.add(SyncStatusState.unconfigured);
+      } else if (failedCount > 0) {
+        _statusController.add(SyncStatusState.error);
+      } else {
+        _statusController.add(SyncStatusState.completed);
+      }
+
+      return SyncResult(
+        syncedCount: syncedCount,
+        failedCount: failedCount,
+        errorMessage: lastErrorMessage,
+        isUnconfigured: driveUnconfigured,
+      );
     } catch (e) {
       _statusController.add(SyncStatusState.error);
-      return syncedCount;
+      return SyncResult(
+        syncedCount: syncedCount,
+        failedCount: failedCount,
+        errorMessage: e.toString(),
+      );
     } finally {
       _isSyncing = false;
     }
@@ -92,7 +140,7 @@ class SyncManager {
             folderId: driveFolderId,
           );
         } else {
-          driveFileId = 'gdrive_file_id_${fileModel.id}';
+          throw GoogleDriveFailure('Local file does not exist at path: ${fileModel.localPath}');
         }
       }
 
@@ -121,10 +169,11 @@ class SyncManager {
     } catch (e) {
       final failedModel = fileModel.copyWith(
         uploadStatus: 'FAILED',
-        syncStatus: 'SYNC_ERROR',
+        syncStatus: e is GoogleDriveNotConfiguredFailure ? 'NOT_CONFIGURED' : 'SYNC_ERROR',
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
       await _sqlite.updateFileStatus(fileModel.id, failedModel.toSqliteMap());
+      rethrow;
     }
   }
 }

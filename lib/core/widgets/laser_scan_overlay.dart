@@ -49,7 +49,7 @@ class _LaserScanOverlayState extends State<LaserScanOverlay> with SingleTickerPr
                   color: StitchColors.primary,
                   boxShadow: [
                     BoxShadow(
-                      color: StitchColors.primary.withOpacity(0.8),
+                      color: StitchColors.primary.withValues(alpha: 0.8),
                       blurRadius: 10,
                       spreadRadius: 2,
                     ),

@@ -20,7 +20,7 @@ class StatWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = isError ? StitchColors.errorContainer : StitchColors.outlineVariant;
-    final bgColor = isError ? StitchColors.errorContainer.withOpacity(0.1) : StitchColors.surface;
+    final bgColor = isError ? StitchColors.errorContainer.withValues(alpha: 0.1) : StitchColors.surface;
     final labelColor = isError ? StitchColors.error : StitchColors.onSurfaceVariant;
     final valueColor = customTextColor ?? (isError ? StitchColors.error : StitchColors.primary);
 

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/theme/stitch_colors.dart';
@@ -41,12 +42,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadInitialFolder();
     _loadGitHubIntegration();
-    _loadGoogleClientId();
+    _loadGoogleDriveState();
   }
 
-  void _loadGoogleClientId() async {
+  void _loadGoogleDriveState() async {
     final clientId = await _driveService.getClientId();
     _clientIdController.text = clientId;
+    await _driveService.initPersistedAuth();
+    if (mounted) setState(() {});
   }
 
   void _loadInitialFolder() async {
@@ -74,6 +77,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final release = await _gitHubService.getLatestRelease();
     if (mounted) {
       setState(() => _releaseInfo = release);
+    }
+  }
+
+  void _pickAndLoadKeyFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final keyFile = File(result.files.single.path!);
+        setState(() => _isSigningInDrive = true);
+        final success = await _driveService.signInWithKeyFile(keyFile);
+
+        if (mounted) {
+          setState(() {
+            _isSigningInDrive = false;
+            if (success) {
+              _driveAuthMessage = 'Google Drive API successfully authenticated using Key File: ${result.files.single.name}';
+            } else {
+              _driveAuthMessage = 'Invalid Key File or unreadable JSON format. Please verify Service Account key.';
+            }
+          });
+        }
+      }
+    } catch (e) {
+      setState(() => _driveAuthMessage = 'Key File selection error: $e');
     }
   }
 
@@ -207,7 +238,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                Text('Google OAuth Client ID', style: StitchTypography.labelMd),
+                // Method 1: Key File Picker (.json)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: StitchColors.primaryContainer.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: StitchColors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('RECOMMENDED METHOD: Load Service Account / Credentials Key File (.json)', style: StitchTypography.labelMd.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text('Select your service_account.json or credentials.json file from your computer for instant 100% Google Drive sync authorization.', style: StitchTypography.bodySm),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _isSigningInDrive ? null : _pickAndLoadKeyFile,
+                        icon: const Icon(Icons.file_open, size: 18),
+                        label: const Text('BROWSE & LOAD KEY FILE (.JSON)'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: StitchColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Method 2: OAuth Sign-In
+                Text('Option 2: Google Account OAuth Sign-In (Client ID)', style: StitchTypography.labelMd),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _clientIdController,
@@ -218,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 Row(
                   children: [
@@ -233,9 +296,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           : const Icon(Icons.login),
                       label: Text(isDriveAuth ? 'RE-AUTHENTICATE GOOGLE ACCOUNT' : 'SIGN IN WITH GOOGLE DRIVE'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: StitchColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        backgroundColor: StitchColors.primaryContainer,
+                        foregroundColor: StitchColors.onPrimaryContainer,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                     ),
@@ -277,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(),
                 const SizedBox(height: 12),
 
-                Text('Option 2: Service Account JSON Key (Server-to-Server Silent Sync)', style: StitchTypography.labelMd),
+                Text('Option 3: Paste Service Account JSON Text', style: StitchTypography.labelMd),
                 const SizedBox(height: 8),
                 Row(
                   children: [

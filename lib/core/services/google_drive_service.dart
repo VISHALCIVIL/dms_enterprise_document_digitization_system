@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
 import '../errors/failures.dart';
+import '../config/app_config.dart';
 
 class GoogleDriveNotConfiguredFailure extends Failure {
   final String errorMessage;
@@ -19,13 +24,63 @@ class DriveUploadProgress {
 }
 
 class GoogleDriveService {
+  static final GoogleDriveService instance = GoogleDriveService._internal();
+
+  factory GoogleDriveService() => instance;
+
+  GoogleDriveService._internal();
+
   drive.DriveApi? _driveApi;
+  String? _authenticatedUserEmail;
 
   bool get isAuthenticated => _driveApi != null;
+  String? get authenticatedUserEmail => _authenticatedUserEmail;
 
-  /// Initialize Drive API client with authenticated HTTP client.
-  void initializeWithClient(http.Client authenticatedClient) {
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: [
+      'email',
+      'https://www.googleapis.com/auth/drive.file',
+    ],
+  );
+
+  /// Interactive Google Sign-In handshake
+  Future<bool> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account == null) return false;
+
+      final httpClient = await _googleSignIn.authenticatedClient();
+      if (httpClient != null) {
+        _driveApi = drive.DriveApi(httpClient);
+        _authenticatedUserEmail = account.email;
+        return true;
+      }
+      return false;
+    } catch (e) {
+      // Fallback for OAuth client authorization
+      return false;
+    }
+  }
+
+  /// Service Account Key File Sign-In
+  Future<bool> signInWithServiceAccount(String serviceAccountJson) async {
+    try {
+      final credentials = auth.ServiceAccountCredentials.fromJson(jsonDecode(serviceAccountJson));
+      final scopes = [drive.DriveApi.driveFileScope];
+
+      final client = await auth.clientViaServiceAccount(credentials, scopes);
+      _driveApi = drive.DriveApi(client);
+      _authenticatedUserEmail = credentials.email;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Manual client initialization
+  void initializeWithClient(http.Client authenticatedClient, {String? email}) {
     _driveApi = drive.DriveApi(authenticatedClient);
+    _authenticatedUserEmail = email ?? 'Authenticated User';
   }
 
   /// Ensure hierarchical folder structure exists on Google Drive:
@@ -39,7 +94,7 @@ class GoogleDriveService {
   }) async {
     if (_driveApi == null) {
       throw const GoogleDriveNotConfiguredFailure(
-        'Google Drive API Integration is not configured or authenticated. No folders or files were uploaded.',
+        'Google Drive API Integration is not authenticated. Please Sign In to your Google Account in Settings to upload data to Google Drive.',
       );
     }
 
@@ -60,7 +115,7 @@ class GoogleDriveService {
   Future<String> _getOrCreateFolder(String folderName, String parentId) async {
     if (_driveApi == null) {
       throw const GoogleDriveNotConfiguredFailure(
-        'Google Drive API Integration is not configured or authenticated.',
+        'Google Drive API Integration is not authenticated.',
       );
     }
 

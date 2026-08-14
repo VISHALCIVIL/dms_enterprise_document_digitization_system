@@ -74,6 +74,8 @@ dependencies:
   connectivity_plus: ^6.0.3
   uuid: ^4.4.0
   logger: ^2.3.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.13
+  googleapis_auth: ^2.3.3
 
 dev_dependencies:
   flutter_test:

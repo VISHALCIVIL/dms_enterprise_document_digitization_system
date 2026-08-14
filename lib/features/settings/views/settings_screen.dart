@@ -6,6 +6,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/stat_widget.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/services/local_folder_sync_service.dart';
+import '../../../core/services/google_drive_service.dart';
 import '../../../core/services/github_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,17 +18,22 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final LocalFolderSyncService _folderSyncService = LocalFolderSyncService();
+  final GoogleDriveService _driveService = GoogleDriveService.instance;
   final GitHubService _gitHubService = GitHubService();
 
   final TextEditingController _folderPathController = TextEditingController();
   final TextEditingController _gitHubTokenController = TextEditingController();
+  final TextEditingController _serviceAccountController = TextEditingController();
 
   FolderScanMetrics? _metrics;
   GitHubReleaseInfo? _releaseInfo;
 
   bool _isLoading = false;
+  bool _isSigningInDrive = false;
+
   String? _statusMessage;
   String? _gitHubStatus;
+  String? _driveAuthMessage;
 
   @override
   void initState() {
@@ -61,6 +67,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final release = await _gitHubService.getLatestRelease();
     if (mounted) {
       setState(() => _releaseInfo = release);
+    }
+  }
+
+  void _signInGoogleDrive() async {
+    setState(() {
+      _isSigningInDrive = true;
+      _driveAuthMessage = null;
+    });
+
+    final success = await _driveService.signInWithGoogle();
+
+    if (mounted) {
+      setState(() {
+        _isSigningInDrive = false;
+        if (success) {
+          _driveAuthMessage = 'Google Drive API successfully authenticated as: ${_driveService.authenticatedUserEmail}';
+        } else {
+          _driveAuthMessage = 'Google Drive Sign-In was cancelled or failed. Please check your credentials.';
+        }
+      });
+    }
+  }
+
+  void _signInServiceAccount() async {
+    final jsonStr = _serviceAccountController.text.trim();
+    if (jsonStr.isEmpty) return;
+
+    setState(() => _isSigningInDrive = true);
+    final success = await _driveService.signInWithServiceAccount(jsonStr);
+
+    if (mounted) {
+      setState(() {
+        _isSigningInDrive = false;
+        if (success) {
+          _driveAuthMessage = 'Google Drive Service Account authenticated cleanly!';
+        } else {
+          _driveAuthMessage = 'Invalid Service Account JSON key string. Please verify key format.';
+        }
+      });
     }
   }
 
@@ -110,14 +155,132 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDriveAuth = _driveService.isAuthenticated;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('System Settings & Storage Configuration', style: StitchTypography.headlineLg),
+          Text('System Settings & API Authorization', style: StitchTypography.headlineLg),
           const SizedBox(height: 4),
-          Text('Configure the local main sync folder location and GitHub API integration for enterprise CI/CD releases.', style: StitchTypography.bodyMd),
+          Text('Authenticate Google Drive API for live document uploads and configure local sync folders.', style: StitchTypography.bodyMd),
+          const SizedBox(height: 24),
+
+          // Google Drive API Authentication Card
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.cloud_sync, color: StitchColors.primary, size: 24),
+                        const SizedBox(width: 10),
+                        Text('Google Drive API Integration', style: StitchTypography.headlineMd),
+                      ],
+                    ),
+                    StatusBadge(
+                      text: isDriveAuth ? 'AUTHENTICATED' : 'NOT AUTHENTICATED',
+                      type: isDriveAuth ? BadgeType.success : BadgeType.error,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Authorize your Google Drive account so that scanned documents, OCR text, and searchable PDFs are uploaded automatically to Google Drive in structured folders (Project/Area/Department/Year/Batch).',
+                  style: StitchTypography.bodySm,
+                ),
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _isSigningInDrive ? null : _signInGoogleDrive,
+                      icon: _isSigningInDrive
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Icon(Icons.login),
+                      label: Text(isDriveAuth ? 'RE-AUTHENTICATE GOOGLE ACCOUNT' : 'SIGN IN WITH GOOGLE DRIVE'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: StitchColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                    if (isDriveAuth && _driveService.authenticatedUserEmail != null) ...[
+                      const SizedBox(width: 16),
+                      Text(
+                        'Account: ${_driveService.authenticatedUserEmail}',
+                        style: StitchTypography.labelMd.copyWith(color: StitchColors.emeraldText),
+                      ),
+                    ],
+                  ],
+                ),
+
+                if (_driveAuthMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDriveAuth ? StitchColors.emeraldContainer : StitchColors.errorContainer.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDriveAuth ? StitchColors.emerald : StitchColors.error),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(isDriveAuth ? Icons.check_circle : Icons.error, color: isDriveAuth ? StitchColors.emeraldText : StitchColors.error, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _driveAuthMessage!,
+                            style: StitchTypography.labelMd.copyWith(color: isDriveAuth ? StitchColors.emeraldText : StitchColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+
+                Text('Option 2: Service Account JSON Key (Server-to-Server Silent Sync)', style: StitchTypography.labelMd),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _serviceAccountController,
+                        maxLines: 1,
+                        decoration: InputDecoration(
+                          hintText: 'Paste {"type": "service_account", "project_id": ...}',
+                          prefixIcon: const Icon(Icons.key_outlined, color: StitchColors.primary),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      onPressed: _signInServiceAccount,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      child: const Text('Apply Key'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Main Sync Folder Configuration Card
@@ -135,12 +298,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text('Main Local Sync Folder Location', style: StitchTypography.headlineMd),
                       ],
                     ),
-                    const StatusBadge(text: 'ONE-TIME SETUP', type: BadgeType.primary),
+                    const StatusBadge(text: 'LOCAL ARCHIVE', type: BadgeType.primary),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Set the root directory on this Windows machine where scanned files are saved. ScanDigitize remembers this location and recursively monitors all subfolders (Project/Area/Department/Year/Batch).',
+                  'Set the root directory on this machine where scanned files are saved. ScanDigitize recursively monitors all subfolders (Project/Area/Department/Year/Batch).',
                   style: StitchTypography.bodySm,
                 ),
                 const SizedBox(height: 20),
@@ -247,7 +410,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Connected to repository: VISHALCIVIL/dms_enterprise_document_digitization_system. Enter your GitHub Personal Access Token (PAT) for automated release checks and hardware error issue reporting.',
+                  'Connected to repository: VISHALCIVIL/dms_enterprise_document_digitization_system.',
                   style: StitchTypography.bodySm,
                 ),
                 const SizedBox(height: 20),

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/stitch_colors.dart';
 import '../../../core/theme/stitch_typography.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/stat_widget.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/database/sqlite_database_service.dart';
+import '../../../core/services/google_drive_service.dart';
+import '../../../core/services/sync_manager.dart';
 
 class UploadQueueScreen extends StatefulWidget {
   const UploadQueueScreen({super.key});
@@ -14,12 +17,17 @@ class UploadQueueScreen extends StatefulWidget {
 
 class _UploadQueueScreenState extends State<UploadQueueScreen> {
   final SqliteDatabaseService _sqlite = SqliteDatabaseService.instance;
+  late final SyncManager _syncManager;
+
   List<Map<String, dynamic>> _pendingFiles = [];
   bool _isLoading = true;
+  bool _isSyncing = false;
+  String? _syncMessage;
 
   @override
   void initState() {
     super.initState();
+    _syncManager = SyncManager(driveService: GoogleDriveService());
     _loadQueue();
   }
 
@@ -34,8 +42,32 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
     }
   }
 
+  void _triggerGoogleSync() async {
+    setState(() {
+      _isSyncing = true;
+      _syncMessage = 'Syncing pending files to Google Drive...';
+    });
+
+    final syncedCount = await _syncManager.syncPendingQueue(force: true);
+    final updatedFiles = await _sqlite.getAllFiles();
+
+    if (mounted) {
+      setState(() {
+        _pendingFiles = updatedFiles;
+        _isSyncing = false;
+        _syncMessage = syncedCount > 0
+            ? 'Successfully synchronized $syncedCount document(s) to Google Drive!'
+            : 'All documents are already fully synchronized to Google Drive.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    int totalCount = _pendingFiles.length;
+    int pendingCount = _pendingFiles.where((f) => f['sync_status'] != 'FULLY_SYNCED').length;
+    int syncedCount = _pendingFiles.where((f) => f['sync_status'] == 'FULLY_SYNCED').length;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -47,24 +79,85 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Upload Queue & Sync Manager', style: StitchTypography.headlineLg),
+                  Text('Upload Queue & Google Drive Sync Manager', style: StitchTypography.headlineLg),
                   const SizedBox(height: 4),
-                  Text('SQLite offline queue status and background synchronization monitor.', style: StitchTypography.bodyMd),
+                  Text('Local SQLite offline queue status and real-time Google Drive synchronization engine.', style: StitchTypography.bodyMd),
                 ],
               ),
-              ElevatedButton.icon(
-                onPressed: _loadQueue,
-                icon: const Icon(Icons.sync, size: 18),
-                label: const Text('Refresh Queue'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: StitchColors.primary,
-                  foregroundColor: StitchColors.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _loadQueue,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Refresh Queue'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: _isSyncing ? null : _triggerGoogleSync,
+                    icon: _isSyncing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_upload, size: 18),
+                    label: Text(_isSyncing ? 'Syncing Drive...' : 'SYNC TO GOOGLE DRIVE NOW'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: StitchColors.primary,
+                      foregroundColor: StitchColors.onPrimary,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 24),
+
+          // Summary Stats Cards
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 2.2,
+            children: [
+              StatWidget(label: 'Total Queue Documents', value: totalCount.toString()),
+              StatWidget(label: 'Pending Google Drive Sync', value: pendingCount.toString(), isError: pendingCount > 0),
+              StatWidget(label: 'Fully Synced Documents', value: syncedCount.toString()),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          if (_syncMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: StitchColors.emeraldContainer,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: StitchColors.emerald),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: StitchColors.emeraldText, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _syncMessage!,
+                      style: StitchTypography.labelMd.copyWith(color: StitchColors.emeraldText),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
 
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
@@ -74,11 +167,11 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    const Icon(Icons.check_circle_outline, size: 48, color: StitchColors.emerald),
+                    const Icon(Icons.cloud_done, size: 48, color: StitchColors.emerald),
                     const SizedBox(height: 12),
-                    Text('All Scanned Documents Fully Synced!', style: StitchTypography.headlineMd),
+                    Text('No Scanned Files in Queue', style: StitchTypography.headlineMd),
                     const SizedBox(height: 4),
-                    Text('There are no pending documents in local SQLite storage.', style: StitchTypography.bodySm),
+                    Text('Start live scanning or select your Main Local Sync Folder in Settings to populate files.', style: StitchTypography.bodySm),
                   ],
                 ),
               ),
@@ -90,35 +183,64 @@ class _UploadQueueScreenState extends State<UploadQueueScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _pendingFiles.length,
-                separatorBuilder: (context, index) => const Divider(),
+                separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final row = _pendingFiles[index];
-                  final status = row['upload_status'] ?? 'PENDING';
+                  final syncStatus = row['sync_status'] ?? 'LOCAL_ONLY';
+                  final driveFileId = row['google_drive_file_id'] ?? '';
+
                   BadgeType bType;
-                  if (status == 'COMPLETED') {
+                  String badgeText;
+
+                  if (syncStatus == 'FULLY_SYNCED') {
                     bType = BadgeType.success;
-                  } else if (status == 'FAILED') {
+                    badgeText = 'GOOGLE DRIVE SYNCED';
+                  } else if (syncStatus == 'SYNC_ERROR') {
                     bType = BadgeType.error;
+                    badgeText = 'SYNC FAILED';
                   } else {
                     bType = BadgeType.warning;
+                    badgeText = 'PENDING SYNC';
                   }
 
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     leading: Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: StitchColors.surfaceContainerLow,
+                      decoration: BoxDecoration(
+                        color: syncStatus == 'FULLY_SYNCED'
+                            ? StitchColors.emeraldContainer
+                            : StitchColors.surfaceContainerLow,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.picture_as_pdf, color: StitchColors.primary),
+                      child: Icon(
+                        syncStatus == 'FULLY_SYNCED' ? Icons.cloud_done : Icons.picture_as_pdf,
+                        color: syncStatus == 'FULLY_SYNCED' ? StitchColors.emeraldText : StitchColors.primary,
+                      ),
                     ),
                     title: Text(row['file_name'] ?? 'Document.pdf', style: StitchTypography.labelMd),
-                    subtitle: Text(
-                      'Batch: ${row['batch_id']} • Pages: ${row['page_count']} • Local: ${row['local_path']}',
-                      style: StitchTypography.bodySm,
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 2),
+                        Text(
+                          'Batch: ${row['batch_id']} • Project: ${row['project_id']} • Pages: ${row['page_count']}',
+                          style: StitchTypography.bodySm,
+                        ),
+                        Text(
+                          'Local Path: ${row['local_path']}',
+                          style: StitchTypography.bodySm.copyWith(color: StitchColors.outline),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (driveFileId.isNotEmpty)
+                          Text(
+                            'Google Drive File ID: $driveFileId',
+                            style: StitchTypography.labelSm.copyWith(color: StitchColors.emeraldText),
+                          ),
+                      ],
                     ),
-                    trailing: StatusBadge(text: status, type: bType),
+                    trailing: StatusBadge(text: badgeText, type: bType),
                   );
                 },
               ),

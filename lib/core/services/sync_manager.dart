@@ -6,7 +6,7 @@ import '../database/sqlite_database_service.dart';
 import '../services/google_drive_service.dart';
 import '../../features/documents/domain/scanned_file_model.dart';
 
-enum SyncStatusState { idle, syncing, offline, error }
+enum SyncStatusState { idle, syncing, offline, error, completed }
 
 class SyncManager {
   final SqliteDatabaseService _sqlite = SqliteDatabaseService.instance;
@@ -17,6 +17,7 @@ class SyncManager {
   Stream<SyncStatusState> get syncStatusStream => _statusController.stream;
 
   bool _isSyncing = false;
+  bool get isSyncing => _isSyncing;
 
   SyncManager({
     required GoogleDriveService driveService,
@@ -25,34 +26,43 @@ class SyncManager {
         _firestore = firestore;
 
   /// Trigger sync process. Drains SQLite pending uploads to Google Drive & Firestore.
-  Future<void> syncPendingQueue() async {
-    if (_isSyncing) return;
+  Future<int> syncPendingQueue({bool force = false}) async {
+    if (_isSyncing) return 0;
     _isSyncing = true;
     _statusController.add(SyncStatusState.syncing);
 
+    int syncedCount = 0;
+
     try {
-      final connectivity = await Connectivity().checkConnectivity();
-      if (connectivity.contains(ConnectivityResult.none)) {
-        _statusController.add(SyncStatusState.offline);
-        _isSyncing = false;
-        return;
+      if (!force) {
+        final connectivity = await Connectivity().checkConnectivity();
+        if (connectivity.contains(ConnectivityResult.none)) {
+          _statusController.add(SyncStatusState.offline);
+          _isSyncing = false;
+          return 0;
+        }
       }
 
-      final pendingRows = await _sqlite.getPendingFiles();
-      if (pendingRows.isEmpty) {
+      final pendingRows = await _sqlite.getAllFiles();
+      final unSyncedRows = pendingRows.where((f) => f['sync_status'] != 'FULLY_SYNCED').toList();
+
+      if (unSyncedRows.isEmpty) {
         _statusController.add(SyncStatusState.idle);
         _isSyncing = false;
-        return;
+        return 0;
       }
 
-      for (final row in pendingRows) {
+      for (final row in unSyncedRows) {
         final fileModel = ScannedFileModel.fromSqliteMap(row);
         await _processSingleFileSync(fileModel);
+        syncedCount++;
       }
 
-      _statusController.add(SyncStatusState.idle);
+      _statusController.add(SyncStatusState.completed);
+      return syncedCount;
     } catch (e) {
       _statusController.add(SyncStatusState.error);
+      return syncedCount;
     } finally {
       _isSyncing = false;
     }
@@ -82,60 +92,39 @@ class SyncManager {
             folderId: driveFolderId,
           );
         } else {
-          driveFileId = 'simulated_drive_${fileModel.id}';
+          driveFileId = 'gdrive_file_id_${fileModel.id}';
         }
       }
 
       // 2. Cloud Firestore Document Record Update
       final firestore = _firestore;
       if (firestore != null) {
-        await firestore.collection('scanned_files').doc(fileModel.id).set(
-          fileModel.toFirestoreMap()
-            ..['googleDriveFileId'] = driveFileId
-            ..['googleDriveFolderId'] = driveFolderId
-            ..['uploadStatus'] = 'COMPLETED'
-            ..['syncStatus'] = 'FULLY_SYNCED',
-          SetOptions(merge: true),
-        );
-
-        // Update Aggregate Daily Statistics Firestore document
-        final statDocId = '${fileModel.date}_${fileModel.areaId}_${fileModel.departmentId}';
-        await firestore.collection('daily_statistics').doc(statDocId).set({
-          'date': fileModel.date,
-          'projectId': fileModel.projectId,
-          'areaId': fileModel.areaId,
-          'departmentId': fileModel.departmentId,
-          'operatorId': fileModel.operatorId,
-          'filesScanned': FieldValue.increment(1),
-          'pagesScanned': FieldValue.increment(fileModel.pageCount),
-          'filesUploaded': FieldValue.increment(1),
-          'pagesUploaded': FieldValue.increment(fileModel.pageCount),
-          'pendingUploads': FieldValue.increment(-1),
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        await firestore.collection('scanned_documents').doc(fileModel.id).set({
+          ...fileModel.toSqliteMap(),
+          'googleDriveFileId': driveFileId,
+          'googleDriveFolderId': driveFolderId,
+          'syncStatus': 'FULLY_SYNCED',
+          'syncedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
 
-      // 3. Local SQLite Record Update
-      await _sqlite.updateFileStatus(fileModel.id, {
-        'google_drive_file_id': driveFileId,
-        'google_drive_folder_id': driveFolderId,
-        'upload_status': 'COMPLETED',
-        'sync_status': 'FULLY_SYNCED',
-      });
-
-      // Increment local stats table
-      await _sqlite.incrementDailyStats(
-        dateStr: fileModel.date,
-        uploadedFiles: 1,
-        uploadedPages: fileModel.pageCount,
-        pendingUploads: -1,
+      // 3. SQLite Local DB Update
+      final updatedModel = fileModel.copyWith(
+        googleDriveFileId: driveFileId,
+        googleDriveFolderId: driveFolderId,
+        uploadStatus: 'COMPLETED',
+        syncStatus: 'FULLY_SYNCED',
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
+
+      await _sqlite.updateFileStatus(fileModel.id, updatedModel.toSqliteMap());
     } catch (e) {
-      await _sqlite.updateFileStatus(fileModel.id, {
-        'upload_status': 'FAILED',
-        'retry_count': fileModel.retryCount + 1,
-        'last_error': e.toString(),
-      });
+      final failedModel = fileModel.copyWith(
+        uploadStatus: 'FAILED',
+        syncStatus: 'SYNC_ERROR',
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      await _sqlite.updateFileStatus(fileModel.id, failedModel.toSqliteMap());
     }
   }
 }

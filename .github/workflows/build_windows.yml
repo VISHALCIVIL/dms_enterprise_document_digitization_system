@@ -26,7 +26,13 @@ jobs:
       run: flutter analyze --no-fatal-infos
 
     - name: Build Windows Release Executable
-      run: flutter build windows --release --extra-gen-args="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+      env:
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+        CMAKE_ARGS: "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+      run: |
+        $env:CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+        $env:CMAKE_ARGS = "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+        flutter build windows --release
 
     - name: Package Release ZIP
       run: |

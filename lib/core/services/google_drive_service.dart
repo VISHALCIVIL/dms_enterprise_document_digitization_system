@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
@@ -43,12 +44,18 @@ class GoogleDriveService {
   bool get isAuthenticated => _driveApi != null;
   String? get authenticatedUserEmail => _authenticatedUserEmail;
 
-  /// Load persisted credentials on startup
+  /// Load persisted credentials or bundled asset key on startup
   Future<bool> initPersistedAuth() async {
     final jsonStr = await _storage.read(key: _storageKeyServiceAccountJson);
     if (jsonStr != null && jsonStr.isNotEmpty) {
       return await signInWithServiceAccount(jsonStr);
     }
+    try {
+      final assetJson = await rootBundle.loadString('assets/config/service_account.json');
+      if (assetJson.isNotEmpty) {
+        return await signInWithServiceAccount(assetJson);
+      }
+    } catch (_) {}
     return false;
   }
 

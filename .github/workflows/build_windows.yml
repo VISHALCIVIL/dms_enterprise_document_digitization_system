@@ -1,10 +1,11 @@
-name: Build Windows Application
+name: Build Windows Application (.exe)
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -25,6 +26,17 @@ jobs:
     - name: Run Static Analysis
       run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
+    - name: Inject Service Account Credentials
+      env:
+        SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+      run: |
+        New-Item -ItemType Directory -Force -Path "assets/config"
+        if ($env:SERVICE_ACCOUNT_JSON) {
+          Set-Content -Path "assets/config/service_account.json" -Value $env:SERVICE_ACCOUNT_JSON
+        } elseif (-not (Test-Path "assets/config/service_account.json")) {
+          Set-Content -Path "assets/config/service_account.json" -Value "{}"
+        }
+
     - name: Build Windows Release Executable
       env:
         CMAKE_POLICY_VERSION_MINIMUM: "3.5"
@@ -36,10 +48,12 @@ jobs:
 
     - name: Package Release ZIP
       run: |
-        Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath scandigitize_windows_release.zip
+        python -c "import shutil; shutil.make_archive('scandigitize_windows_release', 'zip', r'build\windows\x64\runner\Release')"
 
-    - name: Upload Windows Build Artifact
+    - name: Upload Windows Executable & Bundle Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: scandigitize-windows-exe
-        path: scandigitize_windows_release.zip
+        name: scandigitize-windows-build
+        path: |
+          scandigitize_windows_release.zip
+          build/windows/x64/runner/Release/

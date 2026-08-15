@@ -17,10 +17,12 @@ import 'features/analytics/views/analytics_reports_screen.dart';
 import 'features/upload_queue/views/upload_queue_screen.dart';
 import 'features/settings/views/settings_screen.dart';
 import 'core/config/app_config.dart';
+import 'core/services/google_drive_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+  await GoogleDriveService.instance.initPersistedAuth();
   runApp(const ProviderScope(child: ScanDigitizeApp()));
 }
 
